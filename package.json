@@ -6,7 +6,15 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "rnd49",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rnd49/vpngate_parser.git"
+  },
+  "keywords": [],
+  "author": "",
   "license": "ISC",
-  "dependencies": {}
+  "bugs": {
+    "url": "https://github.com/rnd49/vpngate_parser/issues"
+  },
+  "homepage": "https://github.com/rnd49/vpngate_parser#readme"
 }
