@@ -19,7 +19,7 @@ function csvparser(csv) {
 }
 const getContent = url => {
   return new Promise(resolve => {
-    const request = require("http").get(url, response => {
+    require("http").get(url, response => {
       const body = [];
       response.on("data", chunk => body.push(chunk));
       response.on("end", () => resolve(body.join("")));
@@ -51,6 +51,7 @@ getContent("http://www.vpngate.net/api/iphone/")
   .then(data => conf_select(data))
   .then(data => base64_decode(data))
   //.then(data => console.log(data))
+  .then(console.log(`All done`))
   .catch(function(error) {
-    console.log("Ошибка!", error);
+    console.log("Error!", error);
   });
