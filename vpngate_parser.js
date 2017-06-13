@@ -1,57 +1,54 @@
-//STONGLY need to refactor
-function csvparser(csv) {
-  return new Promise((resolve, reject) => {
-    var lines = csv.split("\n");
-    var result = [];
-    var headers = lines[0].split(",");
-    for (var i = 1; i < lines.length; i++) {
-      var obj = {};
-      var currentline = lines[i].split(",");
-      for (var j = 0; j < headers.length; j++) {
-        obj[headers[j]] = currentline[j];
-      }
-
-      result.push(obj);
-      //JSON.stringify(result);
-    }
-    resolve(result), reject("no csv data");
-  });
-}
-const getContent = url => {
-  return new Promise(resolve => {
-    require("http").get(url, response => {
-      const body = [];
-      response.on("data", chunk => body.push(chunk));
-      response.on("end", () => resolve(body.join("")));
-    });
-  });
+const fs = require('fs');
+const fetch = require('node-fetch');
+const neatCsv = require('neat-csv');
+// csv structure
+// '#HostName','IP','Score','Ping','Speed','CountryLong','CountryShort','NumVpnSessions',
+// 'Uptime','TotalUsers','TotalTraffic','LogType','Operator','Message','OpenVPN_ConfigData_Base64'
+const serverFilter = (arr) => {
+  return arr.filter(des => des.CountryShort === 'RU' /* timed hardcode of selection*/);
 };
 
-const server_filter = arr => {
-  var desired_arr = arr.filter(function(des) {
-    return des.CountryShort == "CN"; //hardcode forever))
-  });
-  return desired_arr;
-};
-const conf_select = obj => {
-  //timed hardcode of selection
+const conf_select = (obj) => {
+  // timed hardcode of selection
   return obj[0].OpenVPN_ConfigData_Base64.toString();
 };
-const base64_decode = encoded_str => {
-  const buf = new Buffer(encoded_str, "base64");
-  return buf.toString("utf8");
+const purifyObj = (obj) => {
+  const unwKeys = ['Uptime', 'TotalUsers', 'TotalTrafficLogType', 'Operator', 'Message', 'LogType'];
+  return obj;
 };
-
-getContent("http://www.vpngate.net/api/iphone/")
-  .then(res => res.split(/\r\n|\n|\r/).slice(1, -2).join("\n"))
-  .then(body => csvparser(body))
-  //.then(data => {console.log(`Num of servers: ${data.lenght}`);return data;})
-  .then(data => server_filter(data))
-  //.then(data => {console.log(`Num of desired servers: ${data.lenght}`);return data;})
-  .then(data => conf_select(data))
-  .then(data => base64_decode(data))
-  //.then(data => console.log(data))
-  .then(console.log(`All done`))
-  .catch(function(error) {
-    console.log("Error!", error);
-  });
+const countryList = (obj) => {
+  const countries = [];
+  for (const i in obj) {
+    countries.push(obj[i].CountryShort);
+  }
+  function unique(arr) {
+    const obj = {};
+    for (const i in countries) {
+      const str = arr[i];
+      obj[str] = true;
+    }
+    return Object.keys(obj);
+  }
+  return unique(countries);
+};
+const base64Decode = encodedStr => new Buffer(encodedStr, 'base64').toString('utf8');
+const expConfigs = (obj) => {
+  for (const i in Object.keys(obj)) {
+    fs.writeFile(`${obj[i].CountryShort}_${obj[i].IP}.ovpn`, base64Decode(obj[i].OpenVPN_ConfigData_Base64));
+  }
+};
+fetch('http://www.vpngate.net/api/iphone/')
+  .then(res => res.text())
+  .then(res => res.split(/\r\n|\n|\r/).slice(1, -2).join('\n'))
+  .then(csv => neatCsv(csv))
+  .then((data) => { console.log(`Num of servers: ${Object.keys(data).length}`); return data; })
+  .then((data) => { console.log(`Server countries: ${countryList(data)}`); return data; })
+  .then(data => serverFilter(data))
+  .then((data) => { console.log(`Num of desired servers: ${Object.keys(data).length}`); return data; })
+  .then((data) => { console.log(`Desired server Countries: ${countryList(data)}`); return data; })
+  .then(data => purifyObj(data))
+  // .then(data => conf_select(data))
+  .then(data => expConfigs(data))
+  .then(data => console.log(data))
+  .then(console.log('All done'))
+  .catch(error => console.log('Error!', error));

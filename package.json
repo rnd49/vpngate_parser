@@ -16,5 +16,9 @@
   "bugs": {
     "url": "https://github.com/rnd49/vpngate_parser/issues"
   },
-  "homepage": "https://github.com/rnd49/vpngate_parser#readme"
+  "homepage": "https://github.com/rnd49/vpngate_parser#readme",
+  "dependencies": {
+    "neat-csv": "^2.1.0",
+    "node-fetch": "^1.7.1"
+  }
 }
