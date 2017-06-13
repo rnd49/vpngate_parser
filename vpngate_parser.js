@@ -8,10 +8,7 @@ const serverFilter = (arr) => {
   return arr.filter(des => des.CountryShort === 'RU' /* timed hardcode of selection*/);
 };
 
-const conf_select = (obj) => {
-  // timed hardcode of selection
-  return obj[0].OpenVPN_ConfigData_Base64.toString();
-};
+
 const purifyObj = (obj) => {
   const unwKeys = ['Uptime', 'TotalUsers', 'TotalTrafficLogType', 'Operator', 'Message', 'LogType'];
   return obj;
@@ -31,11 +28,12 @@ const countryList = (obj) => {
   }
   return unique(countries);
 };
-const base64Decode = encodedStr => new Buffer(encodedStr, 'base64').toString('utf8');
+
 const expConfigs = (obj) => {
   for (const i in Object.keys(obj)) {
-    fs.writeFile(`${obj[i].CountryShort}_${obj[i].IP}.ovpn`, base64Decode(obj[i].OpenVPN_ConfigData_Base64));
-  }
+    fs.writeFile(`${obj[i].CountryShort}_${obj[i]['#HostName']}.ovpn`, obj[i].OpenVPN_ConfigData_Base64, 'base64');
+    console.log(`${obj[i]['#HostName']} configuration written`);
+}
 };
 fetch('http://www.vpngate.net/api/iphone/')
   .then(res => res.text())
@@ -47,8 +45,7 @@ fetch('http://www.vpngate.net/api/iphone/')
   .then((data) => { console.log(`Num of desired servers: ${Object.keys(data).length}`); return data; })
   .then((data) => { console.log(`Desired server Countries: ${countryList(data)}`); return data; })
   .then(data => purifyObj(data))
-  // .then(data => conf_select(data))
   .then(data => expConfigs(data))
-  .then(data => console.log(data))
+  // .then(data => console.log(data))
   .then(console.log('All done'))
   .catch(error => console.log('Error!', error));
